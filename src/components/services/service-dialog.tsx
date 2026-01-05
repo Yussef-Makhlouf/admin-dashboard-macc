@@ -50,6 +50,8 @@ interface ServiceDialogProps {
 
 export function ServiceDialog({ open, onOpenChange, service, onSuccess }: ServiceDialogProps) {
     const [isLoading, setIsLoading] = useState(false)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -73,28 +75,43 @@ export function ServiceDialog({ open, onOpenChange, service, onSuccess }: Servic
         } : undefined
     })
 
+    // Reset image state when dialog opens/closes or service changes
+    useState(() => {
+        if (open && service?.header?.image?.imageLink) {
+            setImagePreview(service.header.image.imageLink)
+            setImageFile(null)
+        } else if (open && !service) {
+            setImagePreview(null)
+            setImageFile(null)
+        }
+    })
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setImageFile(file)
+            const objectUrl = URL.createObjectURL(file)
+            setImagePreview(objectUrl)
+        }
+    }
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true)
 
         try {
             const formData = new FormData()
-            // The backend expects flat fields for 'header' properties currently based on model
-            // BUT the model has nested 'header' object.
-            // Let's check the controller `createService`.
-            // If controller expects flat body fields like `req.body.title_en`, we send them flat.
-            // If it expects `req.body.header.title_en`, we need to structure it.
-            // I'll assume flat for now based on typical Express patterns unless I see the controller code.
-            // Let's verify controller in next step if needed. 
-            // For now, I'll send hierarchically in FormData? No, FormData is flat key-value.
-            // We usually send `header[title_en]`.
 
-            formData.append("header[title_en]", values.title_en)
-            formData.append("header[title_ar]", values.title_ar)
-            formData.append("header[sub_title_en]", values.sub_title_en)
-            formData.append("header[sub_title_ar]", values.sub_title_ar)
-            formData.append("header[description_en]", values.description_en)
-            formData.append("header[description_ar]", values.description_ar)
+            formData.append("title_en", values.title_en)
+            formData.append("title_ar", values.title_ar)
+            formData.append("sub_title_en", values.sub_title_en)
+            formData.append("sub_title_ar", values.sub_title_ar)
+            formData.append("description_en", values.description_en)
+            formData.append("description_ar", values.description_ar)
             formData.append("isActive", String(values.isActive))
+
+            if (imageFile) {
+                formData.append("mainImage", imageFile)
+            }
 
             if (service) {
                 await updateServiceSection(service._id, formData)
@@ -153,6 +170,28 @@ export function ServiceDialog({ open, onOpenChange, service, onSuccess }: Servic
                                     </FormItem>
                                 )}
                             />
+                        </div>
+
+                        {/* Main Image Upload */}
+                        <div className="space-y-2">
+                            <FormLabel>Main Image</FormLabel>
+                            <div className="flex items-center gap-4">
+                                <div className="w-32 h-32 rounded-lg border-2 border-dashed flex items-center justify-center relative overflow-hidden bg-muted/50">
+                                    {imagePreview ? (
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="text-center text-xs text-muted-foreground p-2">
+                                            <span>Upload Image</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="w-full max-w-xs"
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

@@ -48,6 +48,10 @@ export interface ServiceSection {
         sub_title_ar: string;
         description_en: string;
         description_ar: string;
+        image?: {
+            imageLink: string;
+            public_id: string;
+        };
     };
     services: ServiceItem[];
     isActive: boolean;

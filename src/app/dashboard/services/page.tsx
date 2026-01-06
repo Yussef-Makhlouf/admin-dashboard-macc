@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2, Plus, FolderOpen, ArrowUpDown, MoreHorizontal, Layers, Pencil, Trash2 } from "lucide-react"
 import { ServiceDialog } from "@/components/services/service-dialog"
 import { ServiceItemsDialog } from "@/components/services/service-items-dialog"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -27,6 +28,11 @@ export default function ServicesPage() {
     const [itemsDialogOpen, setItemsDialogOpen] = useState(false)
     const [editingService, setEditingService] = useState<ServiceSection | null>(null)
     const [managingService, setManagingService] = useState<ServiceSection | null>(null)
+
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [serviceToDelete, setServiceToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -53,14 +59,24 @@ export default function ServicesPage() {
         setItemsDialogOpen(true)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this service section? This will delete all items inside it.")) return
+    const handleDeleteClick = (id: string) => {
+        setServiceToDelete(id)
+        setDeleteModalOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!serviceToDelete) return
+        setIsDeleting(true)
         try {
-            await deleteServiceSection(id)
+            await deleteServiceSection(serviceToDelete)
             toast.success("Service Section deleted")
             fetchData()
         } catch (error) {
             toast.error("Failed to delete section")
+        } finally {
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
+            setServiceToDelete(null)
         }
     }
 
@@ -143,7 +159,7 @@ export default function ServicesPage() {
                             <DropdownMenuItem onClick={() => handleEdit(service)}>
                                 <Pencil className="mr-2 h-4 w-4" /> Edit Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(service._id)}>
+                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(service._id)}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -231,6 +247,16 @@ export default function ServicesPage() {
                 onOpenChange={setItemsDialogOpen}
                 serviceSection={managingService}
                 onSuccess={handleSuccess}
+            />
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Delete Service Section?"
+                description="This action cannot be undone. This will permanently delete the service section and all items inside it."
+                confirmText="Delete Section"
+                isLoading={isDeleting}
             />
         </div>
     )

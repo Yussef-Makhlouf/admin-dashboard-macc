@@ -46,6 +46,15 @@ export const columns: ColumnDef<Application>[] = [
         },
     },
     {
+        accessorKey: "career",
+        header: "Job Title",
+        cell: ({ row }) => {
+            const career = row.original.career;
+            if (typeof career === 'string') return <span className="text-gray-400">—</span>;
+            return <span className="font-medium">{career?.title_en || '—'}</span>;
+        }
+    },
+    {
         accessorKey: "email",
         header: "Email",
     },

@@ -1,16 +1,34 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Application } from "@/types"
+import { useEffect, useState, useMemo } from "react"
+import { Application, Career } from "@/types"
 import { getApplications, deleteApplication, updateApplicationStatus } from "@/lib/api/applications"
 import { columns } from "@/components/applications/columns"
 import { DataTable } from "@/components/ui/data-table"
-import { Loader2, FileText } from "lucide-react"
+import { DeleteModal } from "@/components/ui/delete-modal"
+import { Loader2, FileText, Filter, X } from "lucide-react"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 export default function ApplicationsPage() {
     const [data, setData] = useState<Application[]>([])
     const [isLoading, setIsLoading] = useState(true)
+
+    // Filter states
+    const [jobFilter, setJobFilter] = useState<string>("all")
+    const [statusFilter, setStatusFilter] = useState<string>("all")
+
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [applicationToDelete, setApplicationToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -28,6 +46,34 @@ export default function ApplicationsPage() {
         fetchData()
     }, [])
 
+    // Extract unique job titles for filter
+    const jobTitles = useMemo(() => {
+        const titles = data
+            .map(app => {
+                if (typeof app.career === 'object' && app.career?.title_en) {
+                    return { id: app.career._id, title: app.career.title_en }
+                }
+                return null
+            })
+            .filter((item): item is { id: string; title: string } => item !== null)
+
+        // Remove duplicates by id
+        const unique = titles.filter((item, index, self) =>
+            index === self.findIndex(t => t.id === item.id)
+        )
+        return unique.sort((a, b) => a.title.localeCompare(b.title))
+    }, [data])
+
+    // Filter the data
+    const filteredData = useMemo(() => {
+        return data.filter(app => {
+            const career = app.career as Career | undefined
+            const matchesJob = jobFilter === "all" || career?._id === jobFilter
+            const matchesStatus = statusFilter === "all" || app.status === statusFilter
+            return matchesJob && matchesStatus
+        })
+    }, [data, jobFilter, statusFilter])
+
     const handleStatusUpdate = async (id: string, status: 'Pending' | 'Reviewed' | 'Accepted' | 'Rejected') => {
         try {
             await updateApplicationStatus(id, status)
@@ -39,17 +85,34 @@ export default function ApplicationsPage() {
         }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this application?")) return
+    const handleDeleteClick = (id: string) => {
+        setApplicationToDelete(id)
+        setDeleteModalOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!applicationToDelete) return
+        setIsDeleting(true)
         try {
-            await deleteApplication(id)
+            await deleteApplication(applicationToDelete)
             toast.success("Application deleted")
             fetchData()
         } catch (error) {
             console.error(error)
             toast.error("Failed to delete application")
+        } finally {
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
+            setApplicationToDelete(null)
         }
     }
+
+    const clearFilters = () => {
+        setJobFilter("all")
+        setStatusFilter("all")
+    }
+
+    const hasActiveFilters = jobFilter !== "all" || statusFilter !== "all"
 
     if (isLoading) {
         return (
@@ -81,6 +144,89 @@ export default function ApplicationsPage() {
                 </div>
             </div>
 
+            {/* Stats Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                    <p className="text-2xl font-bold text-gray-900">{data.length}</p>
+                    <p className="text-sm text-gray-500">Total Applications</p>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                    <p className="text-2xl font-bold text-yellow-600">
+                        {data.filter(a => a.status === 'Pending').length}
+                    </p>
+                    <p className="text-sm text-gray-500">Pending</p>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                    <p className="text-2xl font-bold text-blue-600">
+                        {data.filter(a => a.status === 'Reviewed').length}
+                    </p>
+                    <p className="text-sm text-gray-500">Reviewed</p>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                    <p className="text-2xl font-bold text-green-600">
+                        {data.filter(a => a.status === 'Accepted').length}
+                    </p>
+                    <p className="text-sm text-gray-500">Accepted</p>
+                </div>
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                    <p className="text-2xl font-bold text-red-600">
+                        {data.filter(a => a.status === 'Rejected').length}
+                    </p>
+                    <p className="text-sm text-gray-500">Rejected</p>
+                </div>
+            </div>
+
+            {/* Filters Section */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 text-gray-700">
+                        <Filter className="h-4 w-4" />
+                        <span className="font-medium text-sm">Filters:</span>
+                    </div>
+
+                    <Select value={jobFilter} onValueChange={setJobFilter}>
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Job Title" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Jobs</SelectItem>
+                            {jobTitles.map(job => (
+                                <SelectItem key={job.id} value={job.id}>{job.title}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Reviewed">Reviewed</SelectItem>
+                            <SelectItem value="Accepted">Accepted</SelectItem>
+                            <SelectItem value="Rejected">Rejected</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {hasActiveFilters && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearFilters}
+                            className="text-gray-500 hover:text-gray-700"
+                        >
+                            <X className="h-4 w-4 mr-1" />
+                            Clear
+                        </Button>
+                    )}
+
+                    <span className="text-sm text-gray-500 ml-auto">
+                        Showing {filteredData.length} of {data.length} applications
+                    </span>
+                </div>
+            </div>
+
             {/* Data Table */}
             <div className="bg-white rounded-[40px] p-6 shadow-sm">
                 <div className="mb-6">
@@ -89,14 +235,24 @@ export default function ApplicationsPage() {
                 </div>
                 <DataTable
                     columns={columns}
-                    data={data}
-                    searchKey="email"
+                    data={filteredData}
+                    searchKey="fullName"
                     meta={{
                         onStatusUpdate: handleStatusUpdate,
-                        onDelete: handleDelete
+                        onDelete: handleDeleteClick
                     }}
                 />
             </div>
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Delete Application?"
+                description="This action cannot be undone. This will permanently delete this application and all associated data."
+                confirmText="Delete Application"
+                isLoading={isDeleting}
+            />
         </div>
     )
 }

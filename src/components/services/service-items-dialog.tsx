@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -17,6 +17,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import {
     Form,
     FormControl,
@@ -59,6 +60,22 @@ export function ServiceItemsDialog({ open, onOpenChange, serviceSection, onSucce
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    useEffect(() => {
+        if (open) {
+            setIsFormOpen(false)
+            setEditingItem(null)
+            setImageFile(null)
+            setImagePreview(null)
+            setDeleteModalOpen(false)
+            setItemToDelete(null)
+        }
+    }, [open, serviceSection])
 
     const form = useForm<any>({
         resolver: zodResolver(formSchema),
@@ -157,17 +174,24 @@ export function ServiceItemsDialog({ open, onOpenChange, serviceSection, onSucce
         }
     }
 
-    const handleDelete = async (itemId: string) => {
-        if (!serviceSection || !confirm("Are you sure you want to delete this item?")) return
+    const handleDeleteClick = (itemId: string) => {
+        setItemToDelete(itemId)
+        setDeleteModalOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!serviceSection || !itemToDelete) return
+        setIsDeleting(true)
         try {
-            setIsLoading(true)
-            await deleteServiceItem(serviceSection._id, itemId)
+            await deleteServiceItem(serviceSection._id, itemToDelete)
             toast.success("Item deleted")
             onSuccess()
         } catch (error) {
             toast.error("Failed to delete item")
         } finally {
-            setIsLoading(false)
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
+            setItemToDelete(null)
         }
     }
 
@@ -216,7 +240,7 @@ export function ServiceItemsDialog({ open, onOpenChange, serviceSection, onSucce
                                                     <Button variant="ghost" size="icon" onClick={() => handleEditClick(item)}>
                                                         <Pencil className="w-4 h-4 text-blue-500" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => item._id && handleDelete(item._id)}>
+                                                    <Button variant="ghost" size="icon" onClick={() => item._id && handleDeleteClick(item._id)}>
                                                         <Trash2 className="w-4 h-4 text-red-500" />
                                                     </Button>
                                                 </div>
@@ -371,6 +395,16 @@ export function ServiceItemsDialog({ open, onOpenChange, serviceSection, onSucce
                     </div>
                 )}
             </DialogContent>
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Delete Service Item?"
+                description="This action cannot be undone. This will permanently delete the service item."
+                confirmText="Delete Item"
+                isLoading={isDeleting}
+            />
         </Dialog>
     )
 }

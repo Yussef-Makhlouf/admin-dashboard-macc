@@ -5,6 +5,7 @@ import { User } from "@/types"
 import { getUsers, deleteUser } from "@/lib/api/users"
 import { columns } from "@/components/users/columns"
 import { DataTable } from "@/components/ui/data-table"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
 import { Loader2, Plus, Settings as SettingsIcon } from "lucide-react"
 import { UserDialog } from "@/components/users/user-dialog"
@@ -15,6 +16,11 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [userToDelete, setUserToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -37,15 +43,25 @@ export default function SettingsPage() {
         setDialogOpen(true)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this user?")) return
+    const handleDeleteClick = (id: string) => {
+        setUserToDelete(id)
+        setDeleteModalOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!userToDelete) return
+        setIsDeleting(true)
         try {
-            await deleteUser(id)
+            await deleteUser(userToDelete)
             toast.success("User deleted")
             fetchData()
         } catch (error) {
             console.error(error)
             toast.error("Failed to delete user")
+        } finally {
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
+            setUserToDelete(null)
         }
     }
 
@@ -105,7 +121,7 @@ export default function SettingsPage() {
                     searchKey="email"
                     meta={{
                         onEdit: handleEdit,
-                        onDelete: handleDelete
+                        onDelete: handleDeleteClick
                     }}
                 />
             </div>
@@ -115,6 +131,16 @@ export default function SettingsPage() {
                 onOpenChange={setDialogOpen}
                 user={editingUser}
                 onSuccess={handleSuccess}
+            />
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Delete User?"
+                description="This action cannot be undone. This will permanently delete the user account and all associated data."
+                confirmText="Delete User"
+                isLoading={isDeleting}
             />
         </div>
     )

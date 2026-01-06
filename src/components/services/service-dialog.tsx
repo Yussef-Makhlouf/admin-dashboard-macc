@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -76,15 +76,39 @@ export function ServiceDialog({ open, onOpenChange, service, onSuccess }: Servic
     })
 
     // Reset image state when dialog opens/closes or service changes
-    useState(() => {
-        if (open && service?.header?.image?.imageLink) {
-            setImagePreview(service.header.image.imageLink)
-            setImageFile(null)
-        } else if (open && !service) {
-            setImagePreview(null)
+    // Reset image state when dialog opens/closes or service changes
+    useEffect(() => {
+        if (open) {
+            if (service) {
+                form.reset({
+                    title_en: service.header.title_en,
+                    title_ar: service.header.title_ar,
+                    sub_title_en: service.header.sub_title_en,
+                    sub_title_ar: service.header.sub_title_ar,
+                    description_en: service.header.description_en,
+                    description_ar: service.header.description_ar,
+                    isActive: service.isActive
+                })
+                if (service.header?.image?.imageLink) {
+                    setImagePreview(service.header.image.imageLink)
+                } else {
+                    setImagePreview(null)
+                }
+            } else {
+                form.reset({
+                    title_en: "",
+                    title_ar: "",
+                    sub_title_en: "",
+                    sub_title_ar: "",
+                    description_en: "",
+                    description_ar: "",
+                    isActive: true,
+                })
+                setImagePreview(null)
+            }
             setImageFile(null)
         }
-    })
+    }, [open, service, form])
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]

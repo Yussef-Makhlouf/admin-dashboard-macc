@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -85,8 +86,12 @@ export default function Sidebar() {
             {/* Logo Section */}
             <div className="px-6 py-8">
                 <Link href="/dashboard" className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#15AC9E] to-[#1bc4b3] flex items-center justify-center shadow-[0_0_20px_rgba(21,172,158,0.3)]">
-                        <span className="text-white font-bold text-lg font-heading">M</span>
+                    <div className="relative w-10 h-10 flex items-center justify-center bg-white rounded-full p-2">
+                        <img
+                            src="/logo_aqua.png"
+                            alt="MACC"
+                            className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(21,172,158,0.3)]"
+                        />
                     </div>
                     <div>
                         <h1 className="text-xl font-bold tracking-tight font-heading">MACC</h1>

@@ -75,9 +75,17 @@ export default function LoginPage() {
                 <div className="p-8">
                     {/* Logo/Header */}
                     <div className="text-center mb-8">
-                        <div className="w-20 h-20 bg-[#15AC9E]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            {/* Replace with your logo */}
-                            <div className="w-10 h-10 bg-[#15AC9E] rounded-lg" />
+                        <div className="flex justify-center mb-6">
+                            <div className="relative w-24 h-24 flex items-center justify-center bg-white rounded-2xl shadow-lg shadow-emerald-500/10 p-4 border border-emerald-50">
+                                <Image
+                                    src="/logo_aqua.png"
+                                    alt="MACC Logo"
+                                    width={80}
+                                    height={80}
+                                    className="w-full h-full object-contain"
+                                    priority
+                                />
+                            </div>
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900">Welcome Back!</h1>
                         <p className="text-gray-500 mt-2">Sign in to access your dashboard</p>

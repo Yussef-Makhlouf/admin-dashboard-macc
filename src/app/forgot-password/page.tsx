@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -74,6 +75,18 @@ export default function ForgotPasswordPage() {
         <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
                 <div className="p-8">
+                    <div className="flex justify-center mb-6">
+                        <div className="relative w-20 h-20 flex items-center justify-center bg-white rounded-2xl shadow-lg shadow-emerald-500/10 p-3 border border-emerald-50">
+                            <Image
+                                src="/logo_aqua.png"
+                                alt="MACC Logo"
+                                width={60}
+                                height={60}
+                                className="w-full h-full object-contain"
+                                priority
+                            />
+                        </div>
+                    </div>
                     <Link
                         href="/login"
                         className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 mb-8 transition-colors"

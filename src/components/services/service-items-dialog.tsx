@@ -44,7 +44,7 @@ const formSchema = z.object({
     category_ar: z.string().min(2, "Category (AR) is required"),
     description_en: z.string().min(2, "Description (EN) is required"),
     description_ar: z.string().min(2, "Description (AR) is required"),
-    order: z.coerce.number().min(0),
+    order: z.coerce.number().min(1, "Order must be at least 1"),
 })
 
 interface ServiceItemsDialogProps {
@@ -376,7 +376,7 @@ export function ServiceItemsDialog({ open, onOpenChange, serviceSection, onSucce
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Order</FormLabel>
-                                                <FormControl><Input type="number" {...field} /></FormControl>
+                                                <FormControl><Input type="number" min={1} {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

@@ -13,10 +13,28 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function Header() {
-    const [language, setLanguage] = useState<"en" | "ar">("en")
+    const [user, setUser] = useState<{ userName: string, role: string, image?: { imageLink: string } } | null>(null)
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user")
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser))
+            } catch (e) {
+                console.error("Failed to parse user data", e)
+            }
+        }
+    }, [])
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        document.cookie = "token=; path=/; max-age=0";
+        window.location.href = "/login";
+    }
 
     return (
         <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -38,15 +56,7 @@ export default function Header() {
                         </SheetContent>
                     </Sheet>
 
-                    {/* Search Bar */}
-                    <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full w-64 lg:w-80">
-                        <Search className="h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            className="bg-transparent outline-none text-sm flex-1 placeholder:text-gray-400"
-                        />
-                    </div>
+
                 </div>
 
                 {/* Right Section - Actions */}
@@ -77,13 +87,13 @@ export default function Header() {
                                 <span className="absolute top-1 right-1 w-2 h-2 bg-[#15AC9E] rounded-full"></span>
                             </Button>
                         </DropdownMenuTrigger> */}
-                        <DropdownMenuContent align="end" className="w-80 rounded-2xl shadow-lg">
+                        {/* <DropdownMenuContent align="end" className="w-80 rounded-2xl shadow-lg">
                             <DropdownMenuLabel className="font-semibold">Notifications</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <div className="py-2 px-3 text-sm text-gray-500">
                                 <p>No new notifications</p>
                             </div>
-                        </DropdownMenuContent>
+                        </DropdownMenuContent> */}
                     </DropdownMenu>
 
                     {/* User Profile */}
@@ -91,31 +101,25 @@ export default function Header() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center gap-3 px-2 py-1 rounded-full hover:bg-gray-100">
                                 <Avatar className="h-8 w-8 border-2 border-[#15AC9E]">
-                                    <AvatarImage src="/avatar.png" />
+                                    <AvatarImage src={user?.image?.imageLink || "/avatar.png"} />
                                     <AvatarFallback className="bg-[#15AC9E] text-white font-semibold">
-                                        AD
+                                        {user?.userName ? user.userName.substring(0, 2).toUpperCase() : "AD"}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="hidden md:block text-left">
-                                    <p className="text-sm font-semibold text-gray-900">Admin</p>
-                                    <p className="text-xs text-gray-500">Administrator</p>
+                                    <p className="text-sm font-semibold text-gray-900">{user?.userName || "Admin"}</p>
+                                    <p className="text-xs text-gray-500 capitalize">{user?.role || "Administrator"}</p>
                                 </div>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 rounded-xl p-3 shadow-lg">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer">
-                                Profile Settings
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+
+
+
+
                             <DropdownMenuItem
-                                className="cursor-pointer text-red-500 focus:text-red-500"
-                                onClick={() => {
-                                    localStorage.removeItem("token");
-                                    document.cookie = "token=; path=/; max-age=0";
-                                    window.location.href = "/login";
-                                }}
+                                className="cursor-pointer text-red-500 focus:text-red-500 "
+                                onClick={handleLogout}
                             >
                                 Logout
                             </DropdownMenuItem>

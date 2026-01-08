@@ -59,6 +59,11 @@ export default function LoginPage() {
             // Also set as cookie for middleware/server compatibility and easy debugging
             document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`; // 7 days
 
+            // Store user info
+            const { token: _, ...userData } = res.userUpdated; // Exclude token from user data if preferred, or keep it.
+            // Using userData to be cleaner
+            localStorage.setItem("user", JSON.stringify(userData));
+
             // Redirect to dashboard
             router.push("/dashboard")
         } catch (error: any) {

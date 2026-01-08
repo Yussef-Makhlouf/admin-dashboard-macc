@@ -1,4 +1,6 @@
 "use client"
+import { useEffect, useState } from "react"
+import { fetchDashboardStats } from "@/lib/api/statistics"
 
 import { StatCard, StatCardCompact } from "@/components/ui/stat-card"
 import {
@@ -14,6 +16,27 @@ import {
 import Link from "next/link"
 
 export default function DashboardPage() {
+    const [stats, setStats] = useState({
+        applications: 0,
+        services: 0,
+        careers: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const data = await fetchDashboardStats();
+                setStats(data);
+            } catch (error) {
+                console.error("Failed to fetch dashboard stats", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadStats();
+    }, []);
+
     return (
         <div className="space-y-8">
             {/* Page Header */}
@@ -40,32 +63,29 @@ export default function DashboardPage() {
             {/* Main Stats - Featured */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
-                    icon={Clock}
-                    value={8}
-                    suffix="+"
-                    label="Years of Experience"
-                    description="Serving clients since 2016"
+                    icon={Users}
+                    value={stats.applications}
+                    label="Total Applications"
+                    description="Pending and processed applications"
+                    accentColor="#6C63FF"
+                />
+                <StatCard
+                    icon={Briefcase}
+                    value={stats.services}
+                    label="Active Services"
+                    description="Total services offered"
                     accentColor="#15AC9E"
                 />
                 <StatCard
                     icon={FolderKanban}
-                    value={250}
-                    suffix="+"
-                    label="Projects Completed"
-                    description="Across all service categories"
-                    accentColor="#6C63FF"
-                />
-                <StatCard
-                    icon={ThumbsUp}
-                    value={98}
-                    suffix="%"
-                    label="Client Satisfaction"
-                    description="Based on client feedback"
+                    value={stats.careers}
+                    label="Open Careers"
+                    description="Current job openings"
                     accentColor="#D4AF37"
                 />
             </div>
 
-      
+
 
             {/* Quick Actions & Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -113,9 +133,9 @@ export default function DashboardPage() {
                                 className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                             >
                                 <div className={`w-2 h-2 rounded-full ${activity.type === "application" ? "bg-[#6C63FF]" :
-                                        activity.type === "service" ? "bg-[#15AC9E]" :
-                                            activity.type === "appointment" ? "bg-[#007ACC]" :
-                                                "bg-[#D4AF37]"
+                                    activity.type === "service" ? "bg-[#15AC9E]" :
+                                        activity.type === "appointment" ? "bg-[#007ACC]" :
+                                            "bg-[#D4AF37]"
                                     }`} />
                                 <div className="flex-1">
                                     <p className="text-sm font-medium text-gray-700">{activity.title}</p>

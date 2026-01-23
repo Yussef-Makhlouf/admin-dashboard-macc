@@ -32,6 +32,10 @@ export const updateServiceSection = async (id: string, formData: FormData): Prom
 export const deleteServiceSection = async (id: string): Promise<void> => {
     await api.delete(`/services/${id}`);
 }
+
+export const bulkDeleteServices = async (ids: string[]): Promise<void> => {
+    await api.post('/services/multy', { ids });
+}
 // 🔹 Service Items
 export const addServiceItem = async (sectionId: string, formData: FormData): Promise<ServiceSection> => {
     const { data } = await api.post(`/services/${sectionId}/items`, formData, {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { ServiceSection } from "@/types"
-import { getServices, deleteServiceSection } from "@/lib/api/services"
+import { getServices, deleteServiceSection, bulkDeleteServices } from "@/lib/api/services"
 import { DataTable } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
 import { Loader2, Plus, FolderOpen, ArrowUpDown, MoreHorizontal, Layers, Pencil, Trash2 } from "lucide-react"
@@ -33,6 +33,8 @@ export default function ServicesPage() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [serviceToDelete, setServiceToDelete] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+    const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -77,6 +79,28 @@ export default function ServicesPage() {
             setIsDeleting(false)
             setDeleteModalOpen(false)
             setServiceToDelete(null)
+        }
+    }
+
+    const confirmBulkDelete = async () => {
+        setIsDeleting(true)
+        try {
+            const idsToDelete = data
+                .filter((_, index) => rowSelection[index.toString()])
+                .map(service => service._id)
+
+            if (idsToDelete.length === 0) return
+
+            await bulkDeleteServices(idsToDelete)
+            toast.success(`${idsToDelete.length} service sections deleted`)
+            setRowSelection({})
+            fetchData()
+        } catch (error) {
+            console.error(error)
+            toast.error("Failed to delete service sections")
+        } finally {
+            setIsDeleting(false)
+            setBulkDeleteModalOpen(false)
         }
     }
 
@@ -232,7 +256,29 @@ export default function ServicesPage() {
 
             {/* Data Table */}
             <div className="bg-white rounded-[40px] p-6 shadow-sm">
-                <DataTable columns={columns} data={data} searchKey="title" />
+                {Object.keys(rowSelection).length > 0 && (
+                    <div className="mb-4 p-4 bg-red-50 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="font-medium">{Object.keys(rowSelection).length} items selected</span>
+                        </div>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setBulkDeleteModalOpen(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                        >
+                            Delete Selected
+                        </Button>
+                    </div>
+                )}
+                <DataTable
+                    columns={columns}
+                    data={data}
+                    searchKey="title"
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                />
             </div>
 
             <ServiceDialog
@@ -256,6 +302,16 @@ export default function ServicesPage() {
                 title="Delete Service Section?"
                 description="This action cannot be undone. This will permanently delete the service section and all items inside it."
                 confirmText="Delete Section"
+                isLoading={isDeleting}
+            />
+
+            <DeleteModal
+                open={bulkDeleteModalOpen}
+                onOpenChange={setBulkDeleteModalOpen}
+                onConfirm={confirmBulkDelete}
+                title="Delete Selected Sections?"
+                description={`Are you sure you want to delete ${Object.keys(rowSelection).length} selected service sections? This action cannot be undone.`}
+                confirmText="Delete Selected"
                 isLoading={isDeleting}
             />
         </div>

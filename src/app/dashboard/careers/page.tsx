@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { Career } from "@/types"
-import { getCareers, toggleCareerStatus } from "@/lib/api/careers"
+import { getCareers, toggleCareerStatus, deleteCareer, bulkDeleteCareers } from "@/lib/api/careers"
 import { getColumns } from "@/components/careers/columns"
 import { DataTable } from "@/components/ui/data-table"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
-import { Loader2, Plus, Briefcase, Filter, X } from "lucide-react"
+import { Loader2, Plus, Briefcase, Filter, X, Trash2 } from "lucide-react"
 import { CareerDialog } from "@/components/careers/career-dialog"
 import { toast } from "sonner"
 import {
@@ -27,6 +28,13 @@ export default function CareersPage() {
     const [departmentFilter, setDepartmentFilter] = useState<string>("all")
     const [locationFilter, setLocationFilter] = useState<string>("all")
     const [statusFilter, setStatusFilter] = useState<string>("all")
+
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [careerToDelete, setCareerToDelete] = useState<{ id: string; title: string } | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+    const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -81,7 +89,54 @@ export default function CareersPage() {
         }
     }
 
-    const columns = useMemo(() => getColumns(handleEdit, handleToggle), [])
+    const handleDeleteClick = (id: string, title: string) => {
+        setCareerToDelete({ id, title })
+        setDeleteModalOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!careerToDelete) return
+        setIsDeleting(true)
+        try {
+            await deleteCareer(careerToDelete.id)
+            toast.success("Career deleted successfully")
+            fetchData()
+        } catch (error) {
+            toast.error("Failed to delete career")
+        } finally {
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
+            setCareerToDelete(null)
+        }
+    }
+
+
+
+
+
+    const confirmBulkDelete = async () => {
+        setIsDeleting(true)
+        try {
+
+            const idsToDelete = filteredData
+                .filter((_, index) => rowSelection[index.toString()])
+                .map(c => c._id)
+
+            if (idsToDelete.length === 0) return
+
+            await bulkDeleteCareers(idsToDelete)
+            toast.success(`${idsToDelete.length} careers deleted successfully`)
+            setRowSelection({})
+            fetchData()
+        } catch (error) {
+            toast.error("Failed to delete careers")
+        } finally {
+            setIsDeleting(false)
+            setBulkDeleteModalOpen(false)
+        }
+    }
+
+    const columns = useMemo(() => getColumns(handleEdit, handleToggle, handleDeleteClick), [])
 
     const handleSuccess = () => {
         setDialogOpen(false)
@@ -218,7 +273,29 @@ export default function CareersPage() {
 
             {/* Data Table */}
             <div className="bg-white rounded-[40px] p-6 shadow-sm">
-                <DataTable columns={columns} data={filteredData} searchKey="title_en" />
+                {Object.keys(rowSelection).length > 0 && (
+                    <div className="mb-4 p-4 bg-red-50 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="font-medium">{Object.keys(rowSelection).length} items selected</span>
+                        </div>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setBulkDeleteModalOpen(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                        >
+                            Delete Selected
+                        </Button>
+                    </div>
+                )}
+                <DataTable
+                    columns={columns}
+                    data={filteredData}
+                    searchKey="title_en"
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                />
             </div>
 
             <CareerDialog
@@ -226,6 +303,26 @@ export default function CareersPage() {
                 onOpenChange={setDialogOpen}
                 career={editingCareer}
                 onSuccess={handleSuccess}
+            />
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Delete Career?"
+                description={`Are you sure you want to delete "${careerToDelete?.title}"? This action cannot be undone.`}
+                confirmText="Delete Career"
+                isLoading={isDeleting}
+            />
+
+            <DeleteModal
+                open={bulkDeleteModalOpen}
+                onOpenChange={setBulkDeleteModalOpen}
+                onConfirm={confirmBulkDelete}
+                title="Delete Selected Careers?"
+                description={`Are you sure you want to delete ${Object.keys(rowSelection).length} selected careers? This action cannot be undone.`}
+                confirmText="Delete Selected"
+                isLoading={isDeleting}
             />
         </div>
     )

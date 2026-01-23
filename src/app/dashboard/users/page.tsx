@@ -20,16 +20,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+
+
+import { DeleteModal } from "@/components/ui/delete-modal"
 
 export default function UsersPage() {
     const [data, setData] = useState<User[]>([])
@@ -37,8 +30,9 @@ export default function UsersPage() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
 
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [userToDelete, setUserToDelete] = useState<User | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -63,11 +57,12 @@ export default function UsersPage() {
 
     const handleDeleteClick = (user: User) => {
         setUserToDelete(user)
-        setDeleteDialogOpen(true)
+        setDeleteModalOpen(true)
     }
 
     const confirmDelete = async () => {
         if (!userToDelete) return
+        setIsDeleting(true)
         try {
             await deleteUser(userToDelete._id)
             toast.success("User deleted successfully")
@@ -76,7 +71,8 @@ export default function UsersPage() {
             console.error(error)
             toast.error("Failed to delete user")
         } finally {
-            setDeleteDialogOpen(false)
+            setIsDeleting(false)
+            setDeleteModalOpen(false)
             setUserToDelete(null)
         }
     }
@@ -138,8 +134,8 @@ export default function UsersPage() {
                     <Badge
                         variant="secondary"
                         className={`capitalize px-3 py-1 rounded-full ${role === 'admin'
-                                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                             }`}
                     >
                         {role}
@@ -154,8 +150,8 @@ export default function UsersPage() {
                 const isActive = row.getValue("isActive") as boolean
                 return (
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${isActive
-                            ? "bg-green-50 text-green-700 border-green-200"
-                            : "bg-gray-50 text-gray-600 border-gray-200"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-gray-50 text-gray-600 border-gray-200"
                         }`}>
                         <div className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-gray-400"}`} />
                         {isActive ? "Active" : "Inactive"}
@@ -286,26 +282,15 @@ export default function UsersPage() {
                 onSuccess={handleDialogSuccess}
             />
 
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent className="rounded-3xl">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the user
-                            account and remove their data from our servers.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={confirmDelete}
-                            className="bg-red-600 hover:bg-red-700 rounded-full"
-                        >
-                            Delete User
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Delete User?"
+                description="This action cannot be undone. This will permanently delete the user account and remove their data from our servers."
+                confirmText="Delete User"
+                isLoading={isDeleting}
+            />
         </div>
     )
 }

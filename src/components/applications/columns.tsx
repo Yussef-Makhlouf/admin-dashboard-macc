@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Application } from '@/types'
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, MoreHorizontal, Trash2, CheckCircle, XCircle, Clock, Eye } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import {
     DropdownMenu,
@@ -31,6 +32,25 @@ const statusColors = {
 }
 
 export const columns: ColumnDef<Application>[] = [
+    {
+        id: "select",
+        header: ({ table }) => (
+            <Checkbox
+                checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                aria-label="Select all"
+            />
+        ),
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select row"
+            />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    },
     {
         accessorKey: "fullName",
         header: ({ column }) => {

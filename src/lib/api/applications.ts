@@ -24,3 +24,7 @@ export const getCareerApplications = async (careerId: string): Promise<Applicati
     const { data } = await api.get(`/applications/byjob/${careerId}`);
     return data.applications;
 };
+
+export const bulkDeleteApplications = async (ids: string[]): Promise<void> => {
+    await api.post('/applications/bulk-delete', { ids });
+};

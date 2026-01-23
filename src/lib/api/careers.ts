@@ -24,3 +24,11 @@ export const updateCareer = async (id: string, careerData: Partial<Career>): Pro
 export const toggleCareerStatus = async (id: string): Promise<void> => {
     await api.patch(`/careers/${id}/toggle`);
 }
+
+export const deleteCareer = async (id: string): Promise<void> => {
+    await api.delete(`/careers/${id}`);
+}
+
+export const bulkDeleteCareers = async (ids: string[]): Promise<void> => {
+    await api.post('/careers/bulk-delete', { ids });
+}

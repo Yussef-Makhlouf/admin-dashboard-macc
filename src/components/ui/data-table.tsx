@@ -36,6 +36,8 @@ interface DataTableProps<TData, TValue> {
     data: TData[]
     searchKey?: string
     meta?: any
+    rowSelection?: Record<string, boolean>
+    onRowSelectionChange?: (value: any) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +45,8 @@ export function DataTable<TData, TValue>({
     data,
     searchKey = "email",
     meta,
+    rowSelection: externalRowSelection,
+    onRowSelectionChange: setExternalRowSelection,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -50,7 +54,10 @@ export function DataTable<TData, TValue>({
     )
     const [columnVisibility, setColumnVisibility] =
         React.useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = React.useState({})
+    const [internalRowSelection, setInternalRowSelection] = React.useState({})
+
+    const rowSelection = externalRowSelection ?? internalRowSelection
+    const setRowSelection = setExternalRowSelection ?? setInternalRowSelection
 
     const table = useReactTable({
         data,

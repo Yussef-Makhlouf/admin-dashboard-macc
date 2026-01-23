@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { Application, Career } from "@/types"
-import { getApplications, deleteApplication, updateApplicationStatus } from "@/lib/api/applications"
+import { getApplications, deleteApplication, updateApplicationStatus, bulkDeleteApplications } from "@/lib/api/applications"
 import { columns } from "@/components/applications/columns"
 import { DataTable } from "@/components/ui/data-table"
 import { DeleteModal } from "@/components/ui/delete-modal"
-import { Loader2, FileText, Filter, X } from "lucide-react"
+import { Loader2, FileText, Filter, X, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +29,8 @@ export default function ApplicationsPage() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [applicationToDelete, setApplicationToDelete] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+    const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -104,6 +106,28 @@ export default function ApplicationsPage() {
             setIsDeleting(false)
             setDeleteModalOpen(false)
             setApplicationToDelete(null)
+        }
+    }
+
+    const confirmBulkDelete = async () => {
+        setIsDeleting(true)
+        try {
+            const idsToDelete = filteredData
+                .filter((_, index) => rowSelection[index.toString()])
+                .map(app => app._id)
+
+            if (idsToDelete.length === 0) return
+
+            await bulkDeleteApplications(idsToDelete)
+            toast.success(`${idsToDelete.length} applications deleted`)
+            setRowSelection({})
+            fetchData()
+        } catch (error) {
+            console.error(error)
+            toast.error("Failed to delete applications")
+        } finally {
+            setIsDeleting(false)
+            setBulkDeleteModalOpen(false)
         }
     }
 
@@ -233,10 +257,30 @@ export default function ApplicationsPage() {
                     <h2 className="text-xl font-semibold mb-2">Applicants List</h2>
                     <p className="text-muted-foreground text-sm">Review incoming CVs and manage candidate status.</p>
                 </div>
+
+                {Object.keys(rowSelection).length > 0 && (
+                    <div className="mb-4 p-4 bg-red-50 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                            <span className="font-medium">{Object.keys(rowSelection).length} items selected</span>
+                        </div>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setBulkDeleteModalOpen(true)}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                        >
+                            Delete Selected
+                        </Button>
+                    </div>
+                )}
+
                 <DataTable
                     columns={columns}
                     data={filteredData}
                     searchKey="fullName"
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
                     meta={{
                         onStatusUpdate: handleStatusUpdate,
                         onDelete: handleDeleteClick
@@ -251,6 +295,16 @@ export default function ApplicationsPage() {
                 title="Delete Application?"
                 description="This action cannot be undone. This will permanently delete this application and all associated data."
                 confirmText="Delete Application"
+                isLoading={isDeleting}
+            />
+
+            <DeleteModal
+                open={bulkDeleteModalOpen}
+                onOpenChange={setBulkDeleteModalOpen}
+                onConfirm={confirmBulkDelete}
+                title="Delete Selected Applications?"
+                description={`Are you sure you want to delete ${Object.keys(rowSelection).length} selected applications? This action cannot be undone.`}
+                confirmText="Delete Selected"
                 isLoading={isDeleting}
             />
         </div>

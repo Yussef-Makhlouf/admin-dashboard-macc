@@ -70,8 +70,10 @@ export const columns: ColumnDef<Application>[] = [
         header: "Job Title",
         cell: ({ row }) => {
             const career = row.original.career;
-            if (typeof career === 'string') return <span className="text-gray-400">—</span>;
-            return <span className="font-medium">{career?.title_en || '—'}</span>;
+            if (!career || typeof career === 'string') {
+                return <span className="text-blue-600 font-medium">General Application</span>;
+            }
+            return <span className="font-medium">{career?.title_en || 'General Application'}</span>;
         }
     },
     {

@@ -41,7 +41,7 @@ const formSchema = z.object({
     userName: z.string().min(2, "Username must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     password: z.string().optional(),
-    role: z.enum(["user", "admin"]),
+    role: z.enum(["user", "admin", "hr"]),
     isActive: z.boolean().default(true),
 }).refine((data) => {
     // Password is required for creating a new user (when no _id is present in the context usually, but here we validate loosely)
@@ -241,6 +241,7 @@ export function UserDialog({ open, onOpenChange, user, onSuccess }: UserDialogPr
                                             <SelectContent>
                                                 <SelectItem value="user">User</SelectItem>
                                                 <SelectItem value="admin">Admin</SelectItem>
+                                                <SelectItem value="hr">HR</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

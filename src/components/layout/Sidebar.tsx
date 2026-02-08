@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     LayoutDashboard,
     Briefcase,
@@ -65,6 +65,18 @@ const routes: NavItem[] = [
 export default function Sidebar() {
     const pathname = usePathname()
     const [expandedItems, setExpandedItems] = useState<string[]>(["Services Management"])
+    const [user, setUser] = useState<{ role: string } | null>(null)
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user")
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser))
+            } catch (e) {
+                console.error("Failed to parse user", e)
+            }
+        }
+    }, [])
 
     const toggleExpanded = (label: string) => {
         setExpandedItems(prev =>
@@ -94,7 +106,7 @@ export default function Sidebar() {
                         />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight font-heading">MACC</h1>
+                        <h1 className="text-xl font-bold tracking-tight font-heading">{user?.role === 'hr' ? 'HR Panel' : 'MACC'}</h1>
                         <p className="text-xs text-zinc-500 font-medium">Admin Dashboard</p>
                     </div>
                 </Link>
@@ -103,7 +115,12 @@ export default function Sidebar() {
             {/* Navigation */}
             <nav className="flex-1 px-3 py-6 overflow-y-auto custom-scrollbar">
                 <div className="space-y-1">
-                    {routes.map((route) => (
+                    {routes.filter(route => {
+                        if (user?.role === 'hr') {
+                            return ['Careers', 'Applications'].includes(route.label);
+                        }
+                        return true;
+                    }).map((route) => (
                         <div key={route.href}>
                             {route.subItems ? (
                                 <>

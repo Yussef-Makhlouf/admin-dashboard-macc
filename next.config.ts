@@ -1,13 +1,35 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: 'standalone',
   basePath: '/admin',
   assetPrefix: '/admin',
-  images: {
-    unoptimized: true,
+  // تحسينات إضافية للنشر
+  reactStrictMode: true,
+  poweredByHeader: false,
+
+  // عناوين الأمان
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+        ],
+      },
+    ];
   },
-  /* config options here */
 };
 
 export default nextConfig;

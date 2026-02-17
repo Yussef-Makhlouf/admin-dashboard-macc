@@ -121,6 +121,7 @@ export function UserDialog({ open, onOpenChange, user, onSuccess }: UserDialogPr
             }
 
             formData.append("role", values.role)
+            formData.append("isActive", values.isActive.toString())
             // Backend might not support isActive update via this endpoint directly if not in schema, assuming it is.
             // Based on types, User has isActive. UpdateUser endpoint might support it if controller does.
             // Checking backend controller code would confirm. Assuming yes for now.

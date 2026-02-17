@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
 
   // تكوين الصور للسماح بـ ImageKit
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

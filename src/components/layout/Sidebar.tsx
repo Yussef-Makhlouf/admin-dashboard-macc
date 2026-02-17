@@ -100,7 +100,7 @@ export default function Sidebar() {
                 <Link href="/dashboard" className="flex items-center gap-3">
                     <div className="relative w-10 h-10 flex items-center justify-center bg-white rounded-full p-2">
                         <img
-                            src="/logo_aqua.png"
+                            src="/admin/logo_aqua.png"
                             alt="MACC"
                             className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(21,172,158,0.3)]"
                         />
@@ -206,8 +206,9 @@ export default function Sidebar() {
                 <button
                     onClick={() => {
                         localStorage.removeItem("token");
+                        localStorage.removeItem("user");
                         document.cookie = "token=; path=/; max-age=0";
-                        window.location.href = "/login";
+                        window.location.href = "https://macc-fm.com/admin/login";
                     }}
                     className="nav-item w-full text-zinc-400 hover:text-red-400 hover:bg-red-400/10 group justify-center"
                 >

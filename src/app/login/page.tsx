@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -33,6 +33,19 @@ export default function LoginPage() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+    // Check if user is already logged in
+    useEffect(() => {
+        const token = localStorage.getItem("token")
+        const cookieToken = document.cookie.includes("token=")
+        if (token || cookieToken) {
+            // Already logged in, redirect to dashboard
+            router.push("/dashboard")
+        } else {
+            setIsAuthenticated(true)
+        }
+    }, [router])
 
     const form = useForm<any>({
         resolver: zodResolver(formSchema),
@@ -74,6 +87,10 @@ export default function LoginPage() {
         }
     }
 
+    if (!isAuthenticated) {
+        return null // Or a loading spinner
+    }
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
@@ -83,7 +100,7 @@ export default function LoginPage() {
                         <div className="flex justify-center mb-6">
                             <div className="relative w-24 h-24 flex items-center justify-center bg-white rounded-2xl shadow-lg shadow-emerald-500/10 p-4 border border-emerald-50">
                                 <Image
-                                    src="/logo_aqua.png"
+                                    src="/admin/logo_aqua.png"
                                     alt="MACC Logo"
                                     width={80}
                                     height={80}

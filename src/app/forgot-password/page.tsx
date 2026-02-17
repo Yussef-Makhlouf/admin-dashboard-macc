@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
                     <div className="flex justify-center mb-6">
                         <div className="relative w-20 h-20 flex items-center justify-center bg-white rounded-2xl shadow-lg shadow-emerald-500/10 p-3 border border-emerald-50">
                             <Image
-                                src="/logo_aqua.png"
+                                src="/admin/logo_aqua.png"
                                 alt="MACC Logo"
                                 width={60}
                                 height={60}

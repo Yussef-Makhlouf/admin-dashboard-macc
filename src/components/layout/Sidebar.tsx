@@ -207,7 +207,7 @@ export default function Sidebar() {
                     onClick={() => {
                         localStorage.removeItem("token");
                         localStorage.removeItem("user");
-                        document.cookie = "token=; path=/; max-age=0";
+                        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
                         window.location.href = "https://macc-fm.com/admin/login";
                     }}
                     className="nav-item w-full text-zinc-400 hover:text-red-400 hover:bg-red-400/10 group justify-center"

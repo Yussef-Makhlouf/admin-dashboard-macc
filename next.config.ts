@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // تكوين الصور للسماح بـ ImageKit
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+        pathname: '/**',
+      },
+    ],
+  },
+
   // عناوين الأمان
   async headers() {
     return [
